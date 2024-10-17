@@ -1,34 +1,26 @@
-using System;
-using System.Security.Cryptography.X509Certificates;
 using Unity.Collections;
 using Unity.Netcode;
-using Unity.VisualScripting.Dependencies.NCalc;
 
-public class PlayerData : IEquatable<PlayerData> , INetworkSerializable {
-    
+public struct SerializablePlayerData : INetworkSerializable
+{
     public ulong ClientId;
     public FixedString32Bytes PlayerName;
 
     public int Kills;
     public int Deaths;
-    public bool IsOnLine = true;
 
-    
-    public PlayerData(ulong id) {
-        ClientId = id;
-        PlayerName = "Player";
-        Kills = 0;
-        Deaths=0;
-    }
-    public bool Equals(PlayerData other) {
-        return ClientId == other.ClientId;
-    }
-
-    public void ChangePlayerName(FixedString32Bytes playerName) {
+    public SerializablePlayerData(ulong clientId, FixedString32Bytes playerName, int kills, int deaths) {
+        ClientId = clientId;
         PlayerName = playerName;
+        Kills = kills;
+        Deaths = deaths;
     }
-    public void Addkill() => Kills++;
-    public void AddDeath()=> Deaths++;
+    public SerializablePlayerData(PlayerData data) {
+        ClientId = data.ClientId;
+        PlayerName = data.PlayerName;
+        Kills = data.Kills;
+        Deaths = data.Deaths;
+    }
     public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
     {
         //serializer.SerializeValue(ref ClientId);
@@ -52,5 +44,4 @@ public class PlayerData : IEquatable<PlayerData> , INetworkSerializable {
             writer.WriteValueSafe(Deaths);
         }
     }
-    public SerializablePlayerData ToSerializablePlayerData() => new SerializablePlayerData(this);
 }

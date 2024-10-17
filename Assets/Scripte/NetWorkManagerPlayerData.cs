@@ -16,24 +16,39 @@ public   class NetWorkManagerPlayerData :NetworkBehaviour
     [SerializeField]private Transform[] _spawnPoints;
     [SerializeField]private PlayerController _prefabsPlayerController;
     private Dictionary<ulong, NetPlayer> _netPlayers= new Dictionary<ulong, NetPlayer>();
-    private  List<PlayerData> _playerData= new List<PlayerData>();
+    public  List<PlayerData> _playerData = new List<PlayerData>();
     
 
     private void Awake() {
         Instance = this;
+        //playerData= new NetworkList<PlayerData>();
     }
 
     private void Start() {
         NetworkManager.Singleton.OnConnectionEvent += ConnectionEvent;
+        NetworkManager.Singleton.OnClientDisconnectCallback+= SingletonOnOnClientDisconnectCallback;
+    }
+
+    private void SingletonOnOnClientDisconnectCallback(ulong id) {
+        _netPlayers.Remove(id);
+        _playerData.FirstOrDefault(d => d.ClientId == id).IsOnLine=false;
+        UpdatePlayerData();
     }
 
     private void ConnectionEvent(NetworkManager arg1, ConnectionEventData arg2) {
-        if( !PlayerDataAlreadyExist(arg2.ClientId)) _playerData.Add(new PlayerData(arg2.ClientId));
+        Debug.Log("Do Connection Event"+ arg2.ClientId);
+        if(IsServer) if( !PlayerDataAlreadyExist(arg2.ClientId)) _playerData.Add(new PlayerData(arg2.ClientId));
     }
 
     private bool PlayerDataAlreadyExist(ulong id)
     {
-        return _playerData.Any(playerData => playerData.ClientId == id);
+        foreach (var playerData in _playerData)
+        {
+            if (playerData.ClientId == id) return true;
+        }
+
+        return false;
+        //return _playerData.Any(playerData => playerData.ClientId == id);
     }
 
     
@@ -46,9 +61,16 @@ public   class NetWorkManagerPlayerData :NetworkBehaviour
         int iteration=0;
         foreach (var playerData in _playerData) {
             iteration++;
-            if (playerData.ClientId == clientId) {
-                playerData.ChangePlayerName(playerName);
+            if (playerData.ClientId == clientId)
+            {
+                playerData.PlayerName = playerName;
+                UpdatePlayerData();
+                //PlayerData data = playerData;
+                //data.PlayerName = playerName.Value;
+                //playerData.ChangePlayerName(playerName);
+                //playerData.PlayerName = playerName.Value;
                 Debug.Log($"PlayerName: {playerName} pour clientId: {clientId} pour l'itération {iteration}");
+                DebugPlayerData();
                 SpawnPlayerController(clientId);
             }
         }
@@ -65,9 +87,41 @@ public   class NetWorkManagerPlayerData :NetworkBehaviour
     }
 
     public void OnPlayerKill(ulong killerId, ulong deadId) {
-        _playerData.First(p=>p.ClientId == killerId).Addkill();
-        _playerData.First(p=>p.ClientId == deadId).Addkill();
+        foreach (var playerData in _playerData) if (playerData.ClientId == killerId) playerData.Addkill();
+        foreach (var playerData in _playerData) if (playerData.ClientId == deadId) playerData.AddDeath();
         
-        _netPlayers[deadId].SetInDeathMode();
+        //_playerData.First(p=>p.ClientId == killerId).Addkill();
+        //_playerData.First(p=>p.ClientId == deadId).Addkill();
+
+        UpdatePlayerData();
+
+        DebugPlayerData();
+        _netPlayers[deadId].SetInDeathModeClientRpc();
+    }
+
+    public void UpdatePlayerData()
+    {
+        List<SerializablePlayerData> datas = new List<SerializablePlayerData>();
+        foreach (var data in _playerData)
+        {
+            if (!data.IsOnLine) continue;
+            datas.Add(data.ToSerializablePlayerData());
+        }
+        //for (int i = 0; i < _playerData.Count; i++) {
+        //     datas[i] = _playerData[i].ToSerializablePlayerData();
+        //}
+
+        foreach (var netPlayer in _netPlayers.Values) {
+            netPlayer.UpdatePlayerDataClientRpc(datas.ToArray());
+        }
+        
+    }
+
+    private void DebugPlayerData()
+    {
+        Debug.Log("Player data ");
+        foreach (var playerdata in _playerData) {
+            Debug.Log( playerdata.ClientId+ "   "+playerdata.PlayerName+"     "+playerdata.Kills+ "    "+playerdata.Deaths);
+        }
     }
 }

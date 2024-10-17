@@ -72,8 +72,10 @@ public class PlayerController : NetworkBehaviour
                 _imgReload.enabled = true;
                 _imgReload.fillAmount = 0;
 
-                if (hit.collider.transform.GetComponent<PlayerController>()) {
-                    NetWorkManagerPlayerData.Instance.OnPlayerKill(OwnerClientId,hit.collider.transform.GetComponent<PlayerController>().OwnerClientId );
+                if (hit.collider.transform.GetComponent<PlayerController>())
+                {
+                    OnPlayerKillServerRpc(OwnerClientId,
+                        hit.collider.transform.GetComponent<PlayerController>().OwnerClientId);
                     hit.collider.transform.GetComponent<PlayerController>().Death();
                 }
             }
@@ -124,8 +126,7 @@ public class PlayerController : NetworkBehaviour
     }
 
     [ServerRpc]
-    private void OnPlayerKillServerRpc(ulong killerId, ulong deadId)
-    {
-        
+    private void OnPlayerKillServerRpc(ulong killerId, ulong deadId) {
+        NetWorkManagerPlayerData.Instance.OnPlayerKill(killerId,deadId);
     }
 }

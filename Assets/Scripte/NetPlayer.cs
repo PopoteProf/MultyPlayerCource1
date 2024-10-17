@@ -14,6 +14,14 @@ public class NetPlayer : NetworkBehaviour
         if (!IsOwner) return;
         UIManager.Instance.UIPlayerName.gameObject.SetActive(true);
         UIManager.Instance.UIPlayerName.OnPlayerValidateName += SubmitePlayerName;
+        //NetWorkManagerPlayerData.Instance._playerData.OnListChanged += UpdatePlayerData;
+    }
+
+    
+    [ClientRpc]
+    public void UpdatePlayerDataClientRpc(SerializablePlayerData[] datas)
+    {
+         UIManager.Instance.UILeaderBoard.PopulateLeaderboard(datas);
     }
 
     private void Update()
@@ -47,15 +55,16 @@ public class NetPlayer : NetworkBehaviour
         if(IsServer) NetWorkManagerPlayerData.Instance.AddNetPlayer(id, this);
     }
 
-    public void SetInDeathMode() {
+   [ClientRpc]
+    public void SetInDeathModeClientRpc() {
         if(!IsOwner)return;
+        UIManager.Instance.UIDeathCountDown.gameObject.SetActive(true);
         _isDead = true;
         _timer = 0;
     }
 
     [ServerRpc]
     private void AskForRespawnServerRpc() {
-        UIManager.Instance.UIDeathCountDown.gameObject.SetActive(true);
         NetWorkManagerPlayerData.Instance.SpawnPlayerController(OwnerClientId);
     }
-}
+    }
