@@ -1,10 +1,11 @@
 
 using Unity.Mathematics;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.UI;
 
 [RequireComponent(typeof(CharacterController))]
-public class PlayerController : MonoBehaviour
+public class PlayerController : NetworkBehaviour
 {
     [SerializeField] private bool _IsPlaying;
     
@@ -28,6 +29,13 @@ public class PlayerController : MonoBehaviour
     }
     
     void Start() {
+        if (IsOwner)
+        {
+            _IsPlaying = true;
+            NetWorkManagerPlayerData.Instance.VirtualCamera.Follow = transform;
+            NetWorkManagerPlayerData.Instance.VirtualCamera.LookAt = transform;
+        }
+        
         _cc = GetComponent<CharacterController>();
         _camera = Camera.main;
     }
@@ -57,13 +65,15 @@ public class PlayerController : MonoBehaviour
         {
             RaycastHit hit;
             if (Physics.Raycast(_aimPoint.position, _aimPoint.forward, out hit)) {
-                RayEffect ray = Instantiate(_prefabsRayEffect, transform.position, quaternion.identity);
-                ray.SetUpEffect(_aimPoint.position, hit.point);
+                FireServerRpc(_aimPoint.position, hit.point);
+                //RayEffect ray = Instantiate(_prefabsRayEffect, transform.position, quaternion.identity);
+                //ray.SetUpEffect(_aimPoint.position, hit.point);
                 _timer = 0;
                 _imgReload.enabled = true;
                 _imgReload.fillAmount = 0;
 
                 if (hit.collider.transform.GetComponent<PlayerController>()) {
+                    NetWorkManagerPlayerData.Instance.OnPlayerKill(OwnerClientId,hit.collider.transform.GetComponent<PlayerController>().OwnerClientId );
                     hit.collider.transform.GetComponent<PlayerController>().Death();
                 }
             }
@@ -85,7 +95,37 @@ public class PlayerController : MonoBehaviour
     }
 
     public void Death() {
+        DeathServerRpc();
+        //Instantiate(_prefabsPSDeath, transform.position, Quaternion.identity);
+        //Destroy(gameObject);
+    }
+    [ServerRpc]
+    private void FireServerRpc(Vector3 start, Vector3 end) {
+        FireClientRpc(start, end);
+    }
+    
+    [ClientRpc]
+    private void FireClientRpc(Vector3 start, Vector3 end) {
+        RayEffect ray = Instantiate(_prefabsRayEffect, transform.position, quaternion.identity);
+        ray.SetUpEffect(start, end);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void DeathServerRpc() {
+        DeathClientRpc();
+        NetworkObject.Despawn();
+    }
+
+    [ClientRpc]
+    private void DeathClientRpc()
+    {
         Instantiate(_prefabsPSDeath, transform.position, Quaternion.identity);
-        Destroy(gameObject);
+        //Destroy(gameObject);
+    }
+
+    [ServerRpc]
+    private void OnPlayerKillServerRpc(ulong killerId, ulong deadId)
+    {
+        
     }
 }
