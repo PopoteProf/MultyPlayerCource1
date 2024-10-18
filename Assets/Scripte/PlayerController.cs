@@ -92,8 +92,11 @@ public class PlayerController : NetworkBehaviour
     }
 
     private void ManageMovement() {
-        Vector3 moveVec = new Vector3(-Input.GetAxisRaw("Horizontal"),0, -Input.GetAxisRaw("Vertical"));
-        _cc.Move(moveVec.normalized * (_moveSpeed*Time.deltaTime));
+        Vector3 moveVec = new Vector3(-Input.GetAxisRaw("Horizontal"), -9.81f, -Input.GetAxisRaw("Vertical"));
+        if (_cc.isGrounded)
+            moveVec.y = 0;
+
+        _cc.Move(moveVec.normalized * (_moveSpeed  * 2 * Time.deltaTime));
     }
 
     public void Death() {
