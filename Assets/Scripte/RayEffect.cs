@@ -12,6 +12,12 @@ public class RayEffect : MonoBehaviour
         
         _lineRenderer = GetComponent<LineRenderer>();
         _mat = _lineRenderer.material;
+        
+        // elias
+        Color randomColor = Random.ColorHSV(0f, 1f, 0.7f, 1f, 0.8f, 1f);
+        _mat.SetColor("_EmissionColor", randomColor);
+        _mat.EnableKeyword("_EMISSION");
+        
         _lineRenderer.positionCount = 3;
         _lineRenderer.SetPositions(new []{Start, Vector3.Lerp(Start, End, 0.5f), End});
 
