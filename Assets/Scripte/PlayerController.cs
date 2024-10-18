@@ -1,4 +1,5 @@
 
+using System;
 using Unity.Mathematics;
 using Unity.Netcode;
 using UnityEngine;
@@ -27,7 +28,12 @@ public class PlayerController : NetworkBehaviour
     {
         get { return _timer >= _reloadTime; }
     }
+
+    public float timeToBoom = 5f;
+    private bool OnBoomZone = false;
+    private float _boomZoneTimer;
     
+
     void Start() {
         if (IsOwner)
         {
@@ -46,6 +52,17 @@ public class PlayerController : NetworkBehaviour
         ManageAim();
         ManagerFire();
         ManageReload();
+        if (OnBoomZone)
+        {
+            _boomZoneTimer += Time.deltaTime;
+            if (_boomZoneTimer >= timeToBoom)
+            {
+                //Send BOOM to server
+                Debug.Log("BOOM client side");
+                BoomServerRpc();
+                _boomZoneTimer = 0;
+            }
+        }
     }
 
     private void ManageReload() {
@@ -96,6 +113,25 @@ public class PlayerController : NetworkBehaviour
         _cc.Move(moveVec.normalized * (_moveSpeed*Time.deltaTime));
     }
 
+    private void OnTriggerEnter(Collider other)
+    {
+        if(other.CompareTag("BoomZone"))
+        {
+            Debug.Log("Entering boom zone");
+            OnBoomZone = true;
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if(other.CompareTag("BoomZone"))
+        {
+            Debug.Log("exiting boom zone");
+            OnBoomZone = false;
+            _boomZoneTimer = 0;
+        }
+    }
+
     public void Death() {
         DeathServerRpc();
         //Instantiate(_prefabsPSDeath, transform.position, Quaternion.identity);
@@ -110,6 +146,12 @@ public class PlayerController : NetworkBehaviour
     private void FireClientRpc(Vector3 start, Vector3 end) {
         RayEffect ray = Instantiate(_prefabsRayEffect, transform.position, quaternion.identity);
         ray.SetUpEffect(start, end);
+    }
+    
+    [ServerRpc]
+    private void BoomServerRpc() {
+        //NetWorkManagerPlayerData.;
+        NetWorkManagerPlayerData.Instance.Boom(this.OwnerClientId);
     }
 
     [ServerRpc(RequireOwnership = false)]

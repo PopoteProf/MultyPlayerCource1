@@ -82,6 +82,7 @@ public class NetWorkManagerPlayerData :NetworkBehaviour
         PlayerController playerController = Instantiate(_prefabsPlayerController, spawnPoint.position, Quaternion.identity);
         playerController.GetComponent<NetworkObject>().Spawn();
         playerController.GetComponent<NetworkObject>().ChangeOwnership(playerId);
+        //playerController.SetPlayerData(_playerData.First(p => p.ClientId == playerId));
         
        //PlayerController player = Instantiate(_prefabsPlayerController, spawnPoint, Quaternion.identity);
     }
@@ -123,5 +124,20 @@ public class NetWorkManagerPlayerData :NetworkBehaviour
         foreach (var playerdata in _playerData) {
             Debug.Log( playerdata.ClientId+ "   "+playerdata.PlayerName+"     "+playerdata.Kills+ "    "+playerdata.Deaths);
         }
+    }
+    
+    public void Boom(ulong boomLauncher)
+    {
+        foreach (var netPlayer in _netPlayers)
+        {
+            if (netPlayer.Key != boomLauncher)
+            {
+                Debug.Log($"Boom netPlayer:" + netPlayer.Key + "is dead");
+                OnPlayerKill(boomLauncher, netPlayer.Key);
+                
+            }
+        }
+
+        
     }
 }
