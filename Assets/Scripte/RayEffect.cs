@@ -8,14 +8,12 @@ public class RayEffect : MonoBehaviour
     private Material _mat;
     private float _timer;
 
-    public void SetUpEffect(Vector3 Start, Vector3 End) {
+    public void SetUpEffect(Vector3 Start, Vector3 End, Color emissionColor) {
         
         _lineRenderer = GetComponent<LineRenderer>();
         _mat = _lineRenderer.material;
-        
-        // elias
-        Color randomColor = Random.ColorHSV(0f, 1f, 0.7f, 1f, 0.8f, 1f);
-        _mat.SetColor("_EmissionColor", randomColor);
+
+        _mat.SetColor("_EmissionColor", emissionColor);
         _mat.EnableKeyword("_EMISSION");
         
         _lineRenderer.positionCount = 3;

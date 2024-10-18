@@ -3,6 +3,7 @@ using Unity.Mathematics;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.UI;
+using Random = UnityEngine.Random;
 
 [RequireComponent(typeof(CharacterController))]
 public class PlayerController : NetworkBehaviour
@@ -103,13 +104,16 @@ public class PlayerController : NetworkBehaviour
     }
     [ServerRpc]
     private void FireServerRpc(Vector3 start, Vector3 end) {
-        FireClientRpc(start, end);
+        Color randomColor = Random.ColorHSV(0f, 1f, 0.7f, 1f, 0.8f, 1f);
+        Vector3 colorVector = new Vector3(randomColor.r, randomColor.g, randomColor.b);
+        FireClientRpc(start, end, colorVector);
     }
-    
+
     [ClientRpc]
-    private void FireClientRpc(Vector3 start, Vector3 end) {
+    private void FireClientRpc(Vector3 start, Vector3 end, Vector3 colorVector) {
         RayEffect ray = Instantiate(_prefabsRayEffect, transform.position, quaternion.identity);
-        ray.SetUpEffect(start, end);
+        Color color = new Color(colorVector.x, colorVector.y, colorVector.z);
+        ray.SetUpEffect(start, end, color);
     }
 
     [ServerRpc(RequireOwnership = false)]
