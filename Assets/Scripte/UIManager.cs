@@ -6,6 +6,7 @@ public class UIManager : MonoBehaviour
      public UIPlayerName UIPlayerName;
      public UIDeathCountDown UIDeathCountDown;
      public UILeaderBoard UILeaderBoard;
+     public UIRelayCode UIRelayCode;
     
     public static UIManager Instance;
     

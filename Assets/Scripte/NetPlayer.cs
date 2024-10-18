@@ -67,4 +67,4 @@ public class NetPlayer : NetworkBehaviour
     private void AskForRespawnServerRpc() {
         NetWorkManagerPlayerData.Instance.SpawnPlayerController(OwnerClientId);
     }
-    }
+}

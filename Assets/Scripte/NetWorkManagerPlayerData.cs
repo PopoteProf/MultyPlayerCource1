@@ -8,7 +8,7 @@ using UnityEngine;
 using Random = UnityEngine.Random;
 
 
-public   class NetWorkManagerPlayerData :NetworkBehaviour
+public class NetWorkManagerPlayerData :NetworkBehaviour
 {
     public static NetWorkManagerPlayerData Instance;
     public CinemachineVirtualCamera VirtualCamera;
